@@ -1,0 +1,38 @@
+{
+  "env": {
+      "browser": true,
+      "es2021": true
+  },
+  "extends": [
+      "plugin:react/recommended",
+      "airbnb",
+      "airbnb-typescript"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+      "ecmaFeatures": {
+          "jsx": true
+      },
+      "ecmaVersion": "latest",
+      "sourceType": "module",
+      "project": "./tsconfig.json"
+  },
+  "plugins": [
+      "react",
+      "@typescript-eslint"
+  ],
+  "rules": {
+      "react/jsx-filename-extension": [
+          "error",
+          {
+            "extensions": [".jsx", ".tsx"]
+          }
+      ],
+      "no-debugger": "warn",
+      "react/react-in-jsx-scope": "off", // in react v17+ we can not import react in jsx files
+      "react/function-component-definition": [2, { "namedComponents": "arrow-function" }], // i am prefer to use only arrow function for components
+      "import/prefer-default-export": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-use-before-define": [2, "nofunc"] // functions are hoisted
+  }
+}

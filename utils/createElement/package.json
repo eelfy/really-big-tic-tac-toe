@@ -1,0 +1,16 @@
+{
+  "name": "component-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "createComponent.ts",
+  "scripts": {
+    "page": "ELEMENT_TYPE=page ELEMENT_NAME=NotFound ts-node ./createElement.ts",
+    "component": "ELEMENT_TYPE=component ELEMENT_NAME=GameField ts-node ./createElement.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^18.0.1",
+    "typescript": "^4.7.4"
+  }
+}
