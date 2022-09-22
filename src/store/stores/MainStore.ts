@@ -4,7 +4,7 @@ import {
 } from 'components/Cell/CellTypes';
 
 import { makeAutoObservable } from 'mobx';
-import { LineMatchesFinder, LineCheckerOptions } from '../../utils';
+import { LineMatchesFinder, LineCheckerOptions, createNewCell } from '../../utils';
 import { MAP_ROWS, MAP_COLUMNS, MATCHES_TO_WIN } from '../../consts/game';
 
 type PlayerType = Exclude<TypeOfCell, null>;
@@ -34,44 +34,34 @@ class MainStore {
     this.fillTheGameField(0);
   }
 
-  fillTheGameField = (startRowsPosition: number) => {
+  fillTheGameField = (startRowsPosition: number, startColumnPosition: number = 0) => {
     let rowCount = startRowsPosition;
     for (; rowCount <= startRowsPosition + MAP_ROWS; rowCount += 1) {
       this.cells.push([]);
-      for (let columnCount = 0; columnCount <= MAP_COLUMNS; columnCount += 1) {
-        const coordinates: CellCoordinates = [rowCount, columnCount];
-        this.cells[rowCount].push({
-          type: null,
-          id: coordinates.join(':') as CellId,
-          coordinates,
-        });
+      let columnCount = 0;
+      for (; columnCount <= startColumnPosition + MAP_COLUMNS; columnCount += 1) {
+        this.cells[rowCount].push(createNewCell(rowCount, columnCount));
       }
     }
     this.cells[0][0].type = 'cross';
   };
 
   renderAdditionalColumns = () => {
-    this.cells.forEach((row) => {
-      const lastElementInRow = row.length!;
+    this.cells.forEach((row, rowCount) => {
+      const additionalColumns: ICell[] = [];
+      const lastElementInRow = row.length;
 
-      const additionalColumns = row.map((cell) => {
-        const newCoordinates: CellCoordinates = [
-          cell.coordinates[0], cell.coordinates[1] + lastElementInRow,
-        ];
-        const newCell: ICell = {
-          type: null,
-          coordinates: newCoordinates,
-          id: newCoordinates.join(':') as CellId,
-        };
-        return newCell;
-      });
+      let columnCount = lastElementInRow;
 
+      for (; columnCount <= MAP_COLUMNS + lastElementInRow; columnCount += 1) {
+        additionalColumns.push(createNewCell(rowCount, columnCount));
+      }
       row.push(...additionalColumns);
     });
   };
 
   renderAdditionalRows = () => {
-    this.fillTheGameField(this.cells.length);
+    this.fillTheGameField(this.cells.length, this.cells[0].length);
   };
 
   resetGame = () => {
