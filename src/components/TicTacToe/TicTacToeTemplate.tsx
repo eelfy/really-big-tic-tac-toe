@@ -41,12 +41,7 @@ const TicTacToeTemplate: FC<TicTacToeTemplateProps> = observer(() => {
               <div style={{ display: 'flex' }} key={rowIndex}>
                 {row.map((cell) => {
                   const isWinCell = totalGameResults.some((winCell) => `${winCell[0]}:${winCell[1]}` === cell.id);
-                  return (
-                    <div style={{ position: 'relative' }}>
-                      <div style={{ position: 'absolute' }}>{cell.id}</div>
-                      <Cell key={cell.id} cell={cell} isWinCell={isWinCell} />
-                    </div>
-                  );
+                  return (<Cell key={cell.id} cell={cell} isWinCell={isWinCell} />);
                 })}
               </div>
             ))
