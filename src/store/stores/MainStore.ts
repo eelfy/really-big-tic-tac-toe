@@ -1,11 +1,13 @@
+/* eslint-disable max-len */
 /* eslint-disable no-param-reassign */
-import {
-  ICell, CellCoordinates, TypeOfCell, CellId,
-} from 'components/Cell/CellTypes';
+import { ICell, CellCoordinates, TypeOfCell } from 'components/Cell/CellTypes';
 
 import { makeAutoObservable } from 'mobx';
-import { LineMatchesFinder, LineCheckerOptions, createNewCell } from '../../utils';
-import { MAP_ROWS, MAP_COLUMNS, MATCHES_TO_WIN } from '../../consts/game';
+import { fillTheGameField } from '../../utils/fillTheGameField';
+import {
+  LineMatchesFinder, LineCheckerOptions, createNewCell, ICoordinates,
+} from '../../utils';
+import { MAP_COLUMNS, MATCHES_TO_WIN } from '../../consts/game';
 
 type PlayerType = Exclude<TypeOfCell, null>;
 type GameStatus = 'not started' | 'started' | `${PlayerType} win` | 'draw';
@@ -31,20 +33,8 @@ class MainStore {
 
   constructor() {
     makeAutoObservable(this);
-    this.fillTheGameField(0);
+    this.cells = fillTheGameField(0);
   }
-
-  fillTheGameField = (startRowsPosition: number, startColumnPosition: number = 0) => {
-    let rowCount = startRowsPosition;
-    for (; rowCount <= startRowsPosition + MAP_ROWS; rowCount += 1) {
-      this.cells.push([]);
-      let columnCount = 0;
-      for (; columnCount <= startColumnPosition + MAP_COLUMNS; columnCount += 1) {
-        this.cells[rowCount].push(createNewCell(rowCount, columnCount));
-      }
-    }
-    this.cells[0][0].type = 'cross';
-  };
 
   renderAdditionalColumns = () => {
     this.cells.forEach((row, rowCount) => {
@@ -61,7 +51,11 @@ class MainStore {
   };
 
   renderAdditionalRows = () => {
-    this.fillTheGameField(this.cells.length, this.cells[0].length);
+    this.cells = fillTheGameField(this.cells.length, this.cells[0].length);
+  };
+
+  startGame = () => {
+    this.gameStatus = 'started';
   };
 
   resetGame = () => {
@@ -74,21 +68,11 @@ class MainStore {
     this.startGame();
   };
 
-  startGame = () => {
-    this.gameStatus = 'started';
-  };
-
-  changeCellType = (cell: ICell) => {
-    if (cell.type !== null || this.gameStatus !== 'started') return;
+  clickOnCell = (cell: ICell) => {
+    if (cellNotAllowToBeClicked(cell, this.gameStatus)) return;
 
     this.fillTheCell(cell);
-
-    const gameResults = this.checkIsGameEnd(cell);
-    if (gameResults) {
-      this.totalGameResults = [...gameResults[0]];
-      this.gameStatus = `${gameResults[1]} win`;
-    }
-
+    this.endTheGameIfItNecessary(cell);
     this.toggleCurrentPlayer();
   };
 
@@ -103,70 +87,79 @@ class MainStore {
       cell.type = playerType;
     }
 
-    this.addMoveForPlayer(playerType, cell);
+    this.registerPlayerMove(playerType, cell);
   };
 
-  addMoveForPlayer = (playerType: PlayerType, cell: ICell) => {
-    this.playersMoves[playerType].push(cell.coordinates);
-    this.inGameCells.push(cell);
+  endTheGameIfItNecessary = (cell: ICell) => {
+    const gameResults = this.checkIsGameEnd(cell);
+    if (gameResults) {
+      this.totalGameResults = [...gameResults[0]];
+      this.gameStatus = `${gameResults[1]} win`;
+    }
   };
 
   toggleCurrentPlayer = () => {
     this.isNowCross = !this.isNowCross;
   };
 
+  registerPlayerMove = (playerType: PlayerType, cell: ICell) => {
+    this.addCellToPlayerMoves(playerType, cell);
+    this.addCellToInGameList(cell);
+  };
+
+  addCellToPlayerMoves = (playerType: PlayerType, cell: ICell) => {
+    this.playersMoves[playerType].push(cell.coordinates);
+  };
+
+  addCellToInGameList = (cell: ICell) => {
+    this.inGameCells.push(cell);
+  };
+
   checkIsGameEnd = (currentClickedCell: ICell): [CellCoordinates[], PlayerType] | false => {
-    if (this.currentGameNotReadyToCheck(currentClickedCell)) return false;
+    if (currentGameNotReadyToCheck(currentClickedCell, this.playersMoves)) return false;
 
     let cellForCheckCounter = 0;
 
     const finder = new LineMatchesFinder(currentClickedCell, this.cells);
 
-    const horizontalChecker = new LineCheckerOptions(finder);
-    const verticalChecker = new LineCheckerOptions(finder);
-    const diagonal45degChecker = new LineCheckerOptions(finder);
-    const diagonal135degChecker = new LineCheckerOptions(finder);
+    const directionsCheckers = {
+      horizontalChecker: new LineCheckerOptions(finder),
+      verticalChecker: new LineCheckerOptions(finder),
+      diagonal45degChecker: new LineCheckerOptions(finder),
+      diagonal135degChecker: new LineCheckerOptions(finder),
+    };
 
-    const allPossibleDirectionsWithMatches = [
-      horizontalChecker.matches,
-      verticalChecker.matches,
-      diagonal45degChecker.matches,
-      diagonal135degChecker.matches,
-    ];
+    const allPossibleDirectionsWithMatches = Object.values(directionsCheckers).map((checker) => checker.matches);
 
     while (cellForCheckCounter < MATCHES_TO_WIN) {
-      const findedHorizontal: LocalFinded = horizontalChecker.checkForMatch(
-        { x: cellForCheckCounter, y: 0 },
-        { x: cellForCheckCounter * -1, y: 0 },
+      checkDirection(
+        directionsCheckers.horizontalChecker,
+        [
+          { x: cellForCheckCounter, y: 0 },
+          { x: cellForCheckCounter * -1, y: 0 },
+        ],
       );
-
-      const findedVertical: LocalFinded = verticalChecker.checkForMatch(
-        { x: 0, y: cellForCheckCounter },
-        { x: 0, y: cellForCheckCounter * -1 },
+      checkDirection(
+        directionsCheckers.verticalChecker,
+        [
+          { x: 0, y: cellForCheckCounter },
+          { x: 0, y: cellForCheckCounter * -1 },
+        ],
       );
-
-      const findedDiagonalMatches45deg: LocalFinded = diagonal45degChecker.checkForMatch(
-        { x: cellForCheckCounter * -1, y: cellForCheckCounter },
-        { x: cellForCheckCounter, y: cellForCheckCounter * -1 },
+      checkDirection(
+        directionsCheckers.diagonal45degChecker,
+        [
+          { x: cellForCheckCounter * -1, y: cellForCheckCounter },
+          { x: cellForCheckCounter, y: cellForCheckCounter * -1 },
+        ],
       );
-
-      const findedDiagonalMatches135deg: LocalFinded = diagonal135degChecker.checkForMatch(
-        { x: cellForCheckCounter, y: cellForCheckCounter },
-        { x: cellForCheckCounter * -1, y: cellForCheckCounter * -1 },
+      checkDirection(
+        directionsCheckers.diagonal135degChecker,
+        [
+          { x: cellForCheckCounter, y: cellForCheckCounter },
+          { x: cellForCheckCounter * -1, y: cellForCheckCounter * -1 },
+        ],
       );
-
-      if (findedHorizontal) {
-        horizontalChecker.matches.push(...findedHorizontal);
-      }
-      if (findedVertical) {
-        verticalChecker.matches.push(...findedVertical);
-      }
-      if (findedDiagonalMatches45deg) {
-        diagonal135degChecker.matches.push(...findedDiagonalMatches45deg);
-      }
-      if (findedDiagonalMatches135deg) {
-        diagonal45degChecker.matches.push(...findedDiagonalMatches135deg);
-      }
 
       cellForCheckCounter += 1;
     }
@@ -174,10 +167,23 @@ class MainStore {
     const finalFindedMatch = allPossibleDirectionsWithMatches.find((possibleMatch) => (
       (new Set(possibleMatch)).size >= MATCHES_TO_WIN
     ));
+
+    function checkDirection(checker: LineCheckerOptions, config : [ICoordinates, ICoordinates]) {
+      const finded: LocalFinded = checker.checkForMatch(...config);
+      if (finded) {
+        checker.matches.push(...finded);
+      }
+    }
     return finalFindedMatch ? [finalFindedMatch, currentClickedCell.type as PlayerType] : false;
   };
+}
 
-  currentGameNotReadyToCheck = (cell: ICell): boolean => (typeof (cell.type) !== 'string' || this.playersMoves[cell.type].length < MATCHES_TO_WIN);
+function currentGameNotReadyToCheck(cell: ICell, playersMoves: PlayerMoves): boolean {
+  return (typeof (cell.type) !== 'string' || playersMoves[cell.type].length < MATCHES_TO_WIN);
+}
+
+function cellNotAllowToBeClicked(cell:ICell, gameStatus: GameStatus): boolean {
+  return cell.type !== null || gameStatus !== 'started';
 }
 
 export { MainStore };

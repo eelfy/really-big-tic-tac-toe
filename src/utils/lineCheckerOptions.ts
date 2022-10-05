@@ -1,7 +1,13 @@
+import { type } from 'os';
 import { CellCoordinates } from '../components/Cell/CellTypes';
 import { LineMatchesFinder } from './findMatchesInLine';
 
 type Matches = Array<CellCoordinates>;
+
+interface ICoordinates {
+  x: number,
+  y: number
+}
 
 class LineCheckerOptions {
   matches: Matches = [];
@@ -17,14 +23,8 @@ class LineCheckerOptions {
   }
 
   checkForMatch = (
-    nextAccumulators: {
-      x: number,
-      y: number
-    },
-    prevAccumulators: {
-      x: number,
-      y: number
-    },
+    nextAccumulators: ICoordinates,
+    prevAccumulators: ICoordinates,
   ): CellCoordinates[] => {
     const isTheNextCellCorrect = this.finder.findInLine(
       nextAccumulators.x,
@@ -56,4 +56,5 @@ class LineCheckerOptions {
   };
 }
 
+export type { ICoordinates };
 export { LineCheckerOptions };
