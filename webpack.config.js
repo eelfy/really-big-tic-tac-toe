@@ -10,7 +10,7 @@ const webpack = require('webpack');
 
 
 module.exports = (env) => {
-  const MATCHES_TO_WIN = env.MATCHES_TO_WIN || 5
+  const MATCHES_TO_WIN = env.MATCHES_TO_WIN;
   return ({
     mode: prod ? 'production' : 'development',
     entry: './src/index.tsx',
