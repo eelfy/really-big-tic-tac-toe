@@ -19,7 +19,6 @@ interface CellProps {
 interface CellTemplateProps extends CellProps {
   cellClickHandler: () => void;
   cellMark: () => MarkOfCell;
-  isCellWinned: boolean;
 }
 interface CellBehaviorProps extends CellProps {
   cell: ICell;

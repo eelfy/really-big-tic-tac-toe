@@ -24,7 +24,6 @@ const CellBehavior: FC<CellBehaviorProps> = observer(({ cell, isWinCell }) => {
     <CellTemplate
       cellClickHandler={cellClickHandler}
       cellMark={cellMark}
-      isCellWinned={false}
       isWinCell={isWinCell}
     />
   );
