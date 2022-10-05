@@ -1,4 +1,3 @@
-import { type } from 'os';
 import { CellCoordinates } from '../components/Cell/CellTypes';
 import { LineMatchesFinder } from './findMatchesInLine';
 
