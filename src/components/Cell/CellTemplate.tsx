@@ -4,7 +4,7 @@ import { CellTemplateProps } from './CellTypes';
 
 const CellTemplate: FC<CellTemplateProps> = ({ cellClickHandler, cellMark, isWinCell }) => (
   <CellBox isWinCell={isWinCell} onClick={cellClickHandler}>
-    {cellMark()}
+    {cellMark}
   </CellBox>
 );
 

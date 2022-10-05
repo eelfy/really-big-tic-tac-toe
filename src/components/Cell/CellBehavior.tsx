@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react';
+import { FC, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from '../../store/RootStore';
 import { CellBehaviorProps, MarkOfCell } from './CellTypes';
@@ -11,7 +11,7 @@ const CellBehavior: FC<CellBehaviorProps> = observer(({ cell, isWinCell }) => {
     changeCellType(cell);
   };
 
-  const cellMark = useCallback(
+  const cellMark = useMemo(
     (): MarkOfCell => {
       const { type } = cell;
       if (type === null) return null;

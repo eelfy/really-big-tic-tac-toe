@@ -18,7 +18,7 @@ interface CellProps {
 }
 interface CellTemplateProps extends CellProps {
   cellClickHandler: () => void;
-  cellMark: () => MarkOfCell;
+  cellMark: MarkOfCell;
 }
 interface CellBehaviorProps extends CellProps {
   cell: ICell;
